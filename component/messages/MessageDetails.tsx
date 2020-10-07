@@ -1,15 +1,16 @@
+import { useFocusEffect } from "@react-navigation/native";
 import { View, Text, Card, CardItem, Body, Button } from "native-base";
 import React, { useEffect, useMemo, useState } from "react";
 import { MessageModel } from "../../model/messageDetails-model";
 import { ApiService } from "../../service/ApiService";
-import HeaderComponent from "../header/HeaderComponent";
+import styles from "./messagesStyles.js";
 
 export interface MessageDetailsProps {
   navigation: any;
+  route: any;
 }
 
-const MessageDetails = ({ navigation }: MessageDetailsProps) => {
-  const MessageId = navigation.getParam("itemId", "NO-ID");
+const MessageDetails = ({ navigation, route }: MessageDetailsProps) => {
   const apiService = useMemo(() => new ApiService(), []);
   const [message, setMessage] = useState<MessageModel>({
     cle_x_action: null,
@@ -18,19 +19,30 @@ const MessageDetails = ({ navigation }: MessageDetailsProps) => {
     texte: "",
   });
 
-  useEffect(() => {
-    const formData = { cle_x_action: MessageId };
-    apiService.login(formData).then((res) => {
-      console.log("res.data", res.data);
-      setMessage(res.data);
-    });
-  }, [apiService]);
+  useFocusEffect(
+    React.useCallback(() => {
+      let isActive = true;
+      const MessageId = route.params.id;
+      const formData = { cle_x_action: MessageId };
 
-  console.log("message", message.texte);
+      const fetchmessage = async () => {
+        try {
+          const res = await apiService.login(formData);
+          setMessage(res.data);
+        } catch (e) {
+          // nothing
+        }
+      };
+      fetchmessage();
+
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
 
   return (
     <View>
-      <HeaderComponent navigation={navigation} />
       <Card>
         <CardItem header>
           <Text>{message.titre}</Text>
@@ -59,5 +71,3 @@ const MessageDetails = ({ navigation }: MessageDetailsProps) => {
 };
 
 export default MessageDetails;
-
-//       formData = { cle_x_action: valeur };

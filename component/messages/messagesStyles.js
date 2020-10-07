@@ -18,4 +18,7 @@ export default StyleSheet.create({
     paddingTop: "2%",
     color: "black",
   },
+  blueMessageNoSeen: {
+    color: "#318CE7",
+  },
 });

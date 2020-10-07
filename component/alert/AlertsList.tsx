@@ -1,6 +1,5 @@
 import { Content, Text } from "native-base";
 import React from "react";
-import HeaderComponent from "../header/HeaderComponent";
 
 export interface AlertsListProps {
   navigation: any;
@@ -9,7 +8,6 @@ export interface AlertsListProps {
 const AlertsList = ({ navigation }: AlertsListProps) => {
   return (
     <Content>
-      <HeaderComponent navigation={navigation} />
       <Text>pour bientot....</Text>
     </Content>
   );

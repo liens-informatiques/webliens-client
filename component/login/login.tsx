@@ -16,7 +16,7 @@ import * as yup from "yup";
 import { ApiService } from "../../service/ApiService";
 
 // expo
-import { Notifications } from "expo";
+import * as Notifications from "expo-notifications";
 import * as Permissions from "expo-permissions";
 
 export interface LoginProps {
@@ -28,25 +28,36 @@ const Login = ({ navigation }: LoginProps) => {
   const [errorConnexion, SetErrorConnexion] = useState<string>("");
 
   async function handleSubmit(values: Object) {
-    let token: string;
+    let token: any;
 
     const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
     if (status !== "granted") {
-      token = null;
+      values["device_token"] = null;
     } else {
       token = await Notifications.getExpoPushTokenAsync();
+      values["device_token"] = token.data;
     }
-    apiService.login(values).then(async (res) => {
-      try {
-        await AsyncStorage.setItem(
-          "token_auth",
-          res.data.token_auth.toString()
-        );
-        navigation.navigate("MessageList");
-      } catch (e) {
-        SetErrorConnexion(res.data.error);
-      }
-    });
+    values["__cle_dev"] = 300020010804;
+    apiService
+      .login(values)
+      .then(async (res) => {
+        console.log("token envoyé", res.data.token_auth);
+        if (res.data.login) {
+          try {
+            await AsyncStorage.removeItem("token_auth");
+            await AsyncStorage.setItem(
+              "token_auth",
+              res.data.token_auth.toString()
+            );
+          } catch (e) {}
+          navigation.navigate("Messagerie");
+        } else {
+          SetErrorConnexion(res.data.error);
+        }
+      })
+      .catch((e) => {
+        SetErrorConnexion("veuillez contacter l'administrateur");
+      });
   }
 
   return (
@@ -122,8 +133,16 @@ const Login = ({ navigation }: LoginProps) => {
           </Form>
         )}
       </Formik>
+      <Button onPress={() => test()}>
+        <Text>Hello word</Text>
+      </Button>
     </Content>
   );
 };
+
+async function test() {
+  let token_auth = await AsyncStorage.getItem("token_auth");
+  console.log("token vaut ", token_auth);
+}
 
 export default Login;

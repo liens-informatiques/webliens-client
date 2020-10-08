@@ -62,7 +62,7 @@ export default function App() {
       .catch((e) => {});
   }, [apiService]);
 
-  if (!isLoading) {
+  if (isLoading) {
     return <Text>waiting...</Text>;
   }
   const InitialRoute = IsConnected ? "Messagerie" : "Login";

@@ -5,7 +5,7 @@ import styles from "./messagesStyles.js";
 import { MessageState } from "../../enum/MessageState";
 
 export interface MessageProps {
-  message: MessageLiteModel;
+  item: MessageLiteModel;
   navigation: any;
 }
 
@@ -19,12 +19,12 @@ function getTime(date) {
   return a.getHours() + ":" + a.getMinutes();
 }
 
-const Message = ({ message, navigation }: MessageProps) => {
-  const formatDate = getDate(message.date_fin);
-  const time = getTime(message.date_fin);
+const Message = ({ item, navigation }: MessageProps) => {
+  const formatDate = getDate(item.date_fin);
+  const time = getTime(item.date_fin);
 
   let colorStyle = null;
-  if (message.etat === MessageState.UNSEEN) {
+  if (item.etat === MessageState.UNSEEN) {
     colorStyle = styles.blueMessageNoSeen;
   }
 
@@ -34,23 +34,23 @@ const Message = ({ message, navigation }: MessageProps) => {
       button
       onPress={() => {
         navigation.navigate("MessageDetails", {
-          id: message.cle_x_action,
+          id: item.cle_x_action,
         });
       }}
     >
       <Text
         style={{
-          backgroundColor: message.couleur,
+          backgroundColor: item.couleur,
           color: "white",
         }}
       >
-        {message.type_libelle}
+        {item.type_libelle}
       </Text>
       <Body>
         <Text ellipsizeMode='tail' numberOfLines={1} style={colorStyle}>
-          {message.titre}
+          {item.titre}
         </Text>
-        <Text note>{message.emetteur}</Text>
+        <Text note>{item.emetteur}</Text>
       </Body>
       <Right>
         <Text note>{formatDate}</Text>

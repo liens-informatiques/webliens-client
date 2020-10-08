@@ -21,6 +21,7 @@ import {
   SafeAreaView,
   ScrollView,
   View,
+  FlatList,
 } from "react-native";
 
 // model typescript
@@ -44,6 +45,8 @@ import {
 import styles from "./messagesStyles.js";
 import { useFocusEffect } from "@react-navigation/native";
 import Constants from "expo-constants";
+import { MessageState } from "../../enum/MessageState";
+import { MessageFilter } from "../../enum/MessageFilter";
 
 interface MessageListProps {
   navigation: any;
@@ -52,7 +55,6 @@ interface MessageListProps {
 const MessageList = ({ navigation }: MessageListProps) => {
   const apiService = useMemo(() => new ApiService(), []);
   const [messages, setMessages] = useState<MessageLiteModel[]>([]);
-  const [nbeMessages, setNbeMessages] = useState<number>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [titleFilter, setTitleFilter] = useState<string>(
     "Message(s) non-lu(s)"
@@ -70,37 +72,26 @@ const MessageList = ({ navigation }: MessageListProps) => {
   );
 
   const onRefreshData = React.useCallback(() => {
-    console.log("filter", filter);
     handleFilterMessages(filter);
   }, []);
 
   const handleFilterMessages = async (filter) => {
     setRefreshing(true);
     let formData;
-    if (filter === "") {
-      formData = { xaction: null };
-    } else if (filter === "seen") {
-      formData = { xaction: null, filter: "seen" };
+    let title: string;
+    if (filter === MessageFilter.ALL) {
+      formData = { xaction: null, pageSize: 600, page: 1 };
+      title = " Message(s)";
+    } else if (filter === MessageFilter.SEEN) {
+      formData = { xaction: null, filter: "seen", pageSize: 600, page: 1 };
+      title = " Message(s) lu(s)";
     } else {
-      formData = { xaction: null, filter: "unseen" };
+      formData = { xaction: null, filter: "unseen", pageSize: 600, page: 1 };
+      title = " Message(s) non-lu(s)";
     }
     apiService.login(formData).then((res) => {
-      let arrayMessages = [];
-      for (var items in res.data) {
-        arrayMessages.push(res.data[items]);
-      }
-      if (filter === "") {
-        formData = { xaction: null };
-        setTitleFilter("Message(s)");
-      } else if (filter === "seen") {
-        formData = { xaction: null, filter: "seen" };
-        setTitleFilter("Message(s) lu(s)");
-      } else {
-        formData = { xaction: null, filter: "unseen" };
-        setTitleFilter("Message(s) non-lu(s)");
-      }
-      setMessages(arrayMessages);
-      setNbeMessages(arrayMessages.length);
+      setTitleFilter(res.data.count + title);
+      setMessages(res.data.messages);
       setRefreshing(false);
     });
   };
@@ -114,9 +105,7 @@ const MessageList = ({ navigation }: MessageListProps) => {
       <List>
         <ListItem>
           <Left>
-            <Text>
-              {nbeMessages} {titleFilter}
-            </Text>
+            <Text>{titleFilter}</Text>
           </Left>
           <Right>
             <FilterComponent
@@ -128,23 +117,18 @@ const MessageList = ({ navigation }: MessageListProps) => {
           </Right>
         </ListItem>
       </List>
-      <ScrollView
-        contentInsetAdjustmentBehavior='automatic'
-        contentContainerStyle={styles2.scrollView}
+      <FlatList
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefreshData} />
         }
-      >
-        <List>
-          {messages.map((message) => (
-            <Message
-              key={message.cle_x_action}
-              message={message}
-              navigation={navigation}
-            />
-          ))}
-        </List>
-      </ScrollView>
+        contentInsetAdjustmentBehavior='automatic'
+        contentContainerStyle={styles2.scrollView}
+        data={messages}
+        renderItem={({ item }) => (
+          <Message item={item} navigation={navigation} />
+        )}
+        keyExtractor={(item) => item.cle_x_action.toString()}
+      />
     </View>
   );
 };
@@ -173,13 +157,13 @@ export const FilterComponent = ({ onFilterMessages }: FilterComponentProps) => {
         />
       </MenuTrigger>
       <MenuOptions>
-        <MenuOption onSelect={() => onFilterMessages("")}>
+        <MenuOption onSelect={() => onFilterMessages(MessageFilter.ALL)}>
           <Text>Messages Tous</Text>
         </MenuOption>
-        <MenuOption onSelect={() => onFilterMessages(`unseen`)}>
+        <MenuOption onSelect={() => onFilterMessages(MessageFilter.UNSEEN)}>
           <Text>Messages non-lus</Text>
         </MenuOption>
-        <MenuOption onSelect={() => onFilterMessages(`seen`)}>
+        <MenuOption onSelect={() => onFilterMessages(MessageFilter.SEEN)}>
           <Text>Messages lus</Text>
         </MenuOption>
       </MenuOptions>
